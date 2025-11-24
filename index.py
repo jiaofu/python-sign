@@ -192,7 +192,7 @@ def handler(event, context):
         if ahr_value < 0.45:
             signals.append(f"【AHR999 极度低估】值 {ahr_value:.4f}：重仓买入！历史大底信号")
         elif 0.45 <= ahr_value < 0.8:
-            signals.append(f"【AHR999 低估】值 {ahr_value:.4f}：加大定投，合理成本区间")
+            signals.append(f"【AHR999 低估】值 {ahr_value:.4f}：定投，合理成本区间")
         elif 0.8 <= ahr_value < 1.2:
             signals.append(f"【AHR999 中性】值 {ahr_value:.4f}：正常持有")
         elif 1.2 <= ahr_value < 2.0:
