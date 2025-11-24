@@ -117,6 +117,9 @@ def get_etf_premium_rates_from_haoetf(codes, names):
 
 def handler(event, context):
 
+        # --- 0. 获取当前时间 ---
+    current_time_str = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
     # --- 1. 数据获取 ---
 
     # BTC 价格/跌幅
@@ -202,12 +205,17 @@ def handler(event, context):
 
     # --- 3. 推送通知 ---
 
-    title = f"📢 综合信号 - BTC: {cur:,} USD"
+    # 标题中加入时间
+    title = f"📢 综合信号 ({datetime.now().strftime('%H:%M')}) - BTC: {cur:,} USD"
+
+
 
     # 将所有信号加入推送消息体
     signal_body = "\n    ".join([f"**{s}**" for s in signals])
 
     body = f"""
+    [生成时间: {current_time_str}]
+
     --- 🔥 智能交易信号 ---
     {signal_body}
 
