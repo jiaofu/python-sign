@@ -175,32 +175,38 @@ def handler(event, context):
     # BTC 信号
     if isinstance(drop, float):
         if drop <= -20:
-            signals.append("【BTC 买入信号】已从高点下跌超20%！")
+            signals.append("【BTC 观望信号】已从高点下跌超20%！适合观望或轻仓")
         if drop <= -50:
-            signals.append("【山寨币买入信号】BTC 已跌超50%，山寨季来临！")
+            signals.append("【山寨币+ BTC 重仓信号】BTC 已跌超50%，山寨季来临，可重仓BTC/山寨")
 
     # ETF 信号
     high_premium = []
     low_premium = []
-
+    wait_premium = []
     for code in ETF_CODES:
         premium_str = etf_raw_map.get(code, "获取失败")
         if premium_str != "获取失败":
             premium_val = float(premium_str[:-1])
             if premium_val >= 10:
                 high_premium.append(ETF_NAMES.get(code))
-            elif 0 <= premium_val <= 1.5:
+            elif  premium_val<10 and premium_val > 2:
+                wait_premium.append(ETF_NAMES.get(code))
+            elif 0 <= premium_val <= 2:
                 low_premium.append(ETF_NAMES.get(code))
 
     if high_premium:
         signals.append(f"【ETF 卖出信号】{','.join(high_premium)} 溢价≥10%，可套利卖出")
     if low_premium:
-        signals.append(f"【ETF 买入信号】{','.join(low_premium)} 溢价≤1.5%，可申购")
+        signals.append(f"【ETF 买入信号】{','.join(low_premium)} 溢价≤2%，可申购")
+    if wait_premium:
+        signals.append(f"【ETF 观望信号】{','.join(low_premium)} 溢价>2% and <10%，可观望")
 
     # 恐慌指数信号（Crypto F&G）
     if isinstance(fg_value, int):
-        if fg_value <= 15:
+        if fg_value <= 10:
             signals.append(f"【极度恐慌抄底】恐慌指数仅 {fg_value}！历史级别大底信号！")
+        elif fg_value > 10 and fg_value <= 85:
+            signals.append(f"【观望】恐慌指数仅 {fg_value}！观望")
         elif fg_value >= 85:
             signals.append(f"【极度贪婪逃顶】恐慌指数高达 {fg_value}！历史级别阶段顶部！")
 
@@ -210,8 +216,10 @@ def handler(event, context):
             signals.append(f"【VIX极度恐慌抄底】VIX {vix_value}！历史级别大底信号！")
         elif vix_value >= 30:
             signals.append(f"【VIX高度恐慌】VIX {vix_value}，市场剧烈波动，适合对冲")
-        elif vix_value <= 12:
-            signals.append(f"【VIX极度平静】VIX仅 {vix_value}！市场过度自满，警惕回调风险")
+        elif vix_value > 10 and vix_value < 30:
+            signals.append(f"【VIX高度恐慌】VIX {vix_value}，观望")
+        elif vix_value <= 10:
+            signals.append(f"【VIX极度平静】VIX仅 {vix_value}！市场过度自满，回调风险")
 
 
 
@@ -222,7 +230,7 @@ def handler(event, context):
         elif 0.45 <= ahr_value < 0.8:
             signals.append(f"【AHR999 低估】值 {ahr_value:.4f}：定投，合理成本区间")
         elif 0.8 <= ahr_value < 1.2:
-            signals.append(f"【AHR999 中性】值 {ahr_value:.4f}：正常持有")
+            signals.append(f"【AHR999 中性】值 {ahr_value:.4f}： 观望")
         elif 1.2 <= ahr_value < 2.0:
             signals.append(f"【AHR999 高估】值 {ahr_value:.4f}：逐步减仓，锁定利润")
         else:
@@ -237,7 +245,7 @@ def handler(event, context):
     body = f"""
 [生成时间: {current_time_str}]
 
---- 🔥 智能交易信号 ---
+--- 🔥 智能交易信号（一年3-7次出手） ---
 {signal_body}
 
 --- 📊 BTC/加密货币数据 ---
