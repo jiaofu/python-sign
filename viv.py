@@ -204,20 +204,20 @@ def handler(event, context):
     # 恐慌指数信号（Crypto F&G）
     if isinstance(fg_value, int):
         if fg_value <= 10:
-            signals.append(f"【极度恐慌抄底】恐慌指数仅 {fg_value}！历史级别大底信号！")
+            signals.append(f"【Crypto恐慌指数-极端恐慌】恐慌指数仅 {fg_value}！历史级别大底信号！马上抄底！")
         elif fg_value > 10 and fg_value <= 85:
-            signals.append(f"【观望】恐慌指数仅 {fg_value}！观望")
+            signals.append(f"【Crypto恐慌指数-正常情绪】恐慌指数仅 {fg_value}！观望")
         elif fg_value >= 85:
-            signals.append(f"【极度贪婪逃顶】恐慌指数高达 {fg_value}！历史级别阶段顶部！")
+            signals.append(f"【Crypto恐慌指数-极端贪婪】恐慌指数高达 {fg_value}！历史级别阶段顶部！开始逃顶！")
 
     # 新增：VIX 信号
     if isinstance(vix_value, float):
         if vix_value >= 40:
-            signals.append(f"【VIX极度恐慌抄底】VIX {vix_value}！历史级别大底信号！")
+            signals.append(f"【VIX极度恐慌】VIX {vix_value}！历史级别大底信号！抄底！")
         elif vix_value >= 30:
-            signals.append(f"【VIX高度恐慌】VIX {vix_value}，市场剧烈波动，适合对冲")
+            signals.append(f"【VIX高度恐慌】VIX {vix_value}，市场剧烈波动，适合对冲/观望")
         elif vix_value > 10 and vix_value < 30:
-            signals.append(f"【VIX高度恐慌】VIX {vix_value}，观望")
+            signals.append(f"【VIX正常情绪】VIX {vix_value}，观望")
         elif vix_value <= 10:
             signals.append(f"【VIX极度平静】VIX仅 {vix_value}！市场过度自满，回调风险")
 
