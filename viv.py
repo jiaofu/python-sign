@@ -5,6 +5,7 @@ from datetime import datetime, date, timedelta
 import re
 import json
 from bs4 import BeautifulSoup
+import yfinance as yf  # 新增：导入纳斯达克数据获取库
 
 # --- 配置 ---
 BARK_KEY = "5vMdJU9YEoLmQLKne6kSoE"
@@ -12,6 +13,40 @@ BARK_KEY = "5vMdJU9YEoLmQLKne6kSoE"
 # --- ETF 基础数据 (供信号判断使用) ---
 ETF_CODES = ["513500", "159612", "159632", "513100"]
 ETF_NAMES = {"513500":"博时标普500", "159612":"国泰标普500", "159632":"华安纳斯达克100", "513100":"国泰纳斯达克100"}
+
+
+# ====================================================================
+# 【新增：纳斯达克指数数据获取与跌幅计算函数】
+# ====================================================================
+def get_nasdaq_drop_data():
+    """
+    获取纳斯达克综合指数（^IXIC）的历史最高价、当前价、相对跌幅
+    返回: (nasdaq_current, nasdaq_high, nasdaq_drop)  若失败返回 (None, None, None)
+    """
+    try:
+        # 定义纳斯达克综合指数代码，^NDX 为纳斯达克100指数，可按需切换
+        nasdaq_ticker = "^IXIC"
+        ticker = yf.Ticker(nasdaq_ticker)
+
+        # 1. 获取历史最高收盘价（更具参考性，也可替换为 High 列获取盘中最高价）
+        hist_data = ticker.history(period="max")
+        if hist_data.empty:
+            return None, None, None
+        nasdaq_high = hist_data["Close"].max()
+
+        # 2. 获取当前价格（非交易时段为最新收盘价，交易时段为实时盘中价）
+        nasdaq_current = ticker.fast_info["last_price"]
+
+        # 3. 计算相对跌幅
+        nasdaq_drop = (nasdaq_current - nasdaq_high) / nasdaq_high * 100
+
+        # 保留2位小数，提升数据整洁度
+        return round(nasdaq_current, 2), round(nasdaq_high, 2), round(nasdaq_drop, 2)
+
+    except Exception as e:
+        print(f"纳斯达克指数数据获取失败: {e}")
+        return None, None, None
+
 
 # ====================================================================
 # 【工具函数】
@@ -164,6 +199,11 @@ def handler(event, context):
         print(f"VIX 获取错误: {str(e)}")
 
 
+    # 新增：调用纳斯达克数据获取函数
+    nasdaq_current, nasdaq_high, nasdaq_drop = get_nasdaq_drop_data()
+
+
+
     # ETF 溢价率
     etf_results, etf_raw_map = get_etf_premium_rates_from_haoetf(ETF_CODES, ETF_NAMES)
     etf_body = "\n    " + "\n    ".join(etf_results)
@@ -178,6 +218,17 @@ def handler(event, context):
             signals.append("【BTC 观望信号】已从高点下跌超20%！适合观望或轻仓")
         if drop <= -50:
             signals.append("【山寨币+ BTC 重仓信号】BTC 已跌超50%，山寨季来临，可重仓BTC/山寨")
+
+    # 新增：纳斯达克指数 3档交易信号（核心需求）
+    if isinstance(nasdaq_drop, float):
+        # 注意：nasdaq_drop 为负数表示下跌，绝对值为下跌幅度
+        drop_abs = abs(nasdaq_drop)
+        if drop_abs < 20:
+            signals.append(f"【纳指 观望信号】从高点下跌 {drop_abs}%（＜20%），适合观望")
+        elif 20 <= drop_abs < 30:
+            signals.append(f"【纳指 买入信号】从高点下跌 {drop_abs}%（≥20%），开始分批买入")
+        elif drop_abs >= 30:
+            signals.append(f"【纳指 重仓信号】从高点下跌 {drop_abs}%（≥30%），借款加大仓位买入！")
 
     # ETF 信号
     high_premium = []
@@ -245,7 +296,7 @@ def handler(event, context):
     body = f"""
 [生成时间: {current_time_str}]
 
---- 🔥 智能交易信号（一年3-8次出手） ---
+--- 🔥 智能交易信号（一年3-7次出手） ---
 {signal_body}
 
 --- 📊 BTC/加密货币数据 ---
@@ -253,11 +304,17 @@ def handler(event, context):
 📈 历史高点: {high:,} USD
 📉 价格变动: {drop}%
 😱 Crypto 恐慌指数: {fg_value} ({level})
-🌊 VIX 恐慌指数: {vix_value}
-
 🚀 AHR999: {ahr_value if ahr_value else '计算失败'}
 
---- 📈 QDII ETF 溢价率 (haoetf) ---{etf_body}
+--- 💹 纳指数据 ---
+🌊 VIX 恐慌指数: {vix_value}
+💵 当前点数: {nasdaq_current} 点
+📈 历史高点: {nasdaq_high} 点
+📉 相对高点跌幅:  {nasdaq_drop}%
+
+
+--- 📈 A股 QDII ETF 溢价率 (haoetf) ---
+{etf_body}
 """
 
     print(title)
