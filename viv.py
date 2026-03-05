@@ -267,8 +267,10 @@ def handler(event, context):
             signals.append(f"【VIX极度恐慌】VIX {vix_value}！历史级别大底信号！抄底！")
         elif vix_value >= 30:
             signals.append(f"【VIX高度恐慌】VIX {vix_value}，市场剧烈波动，适合对冲/观望")
-        elif vix_value > 10 and vix_value < 30:
-            signals.append(f"【VIX正常情绪】VIX {vix_value}，观望")
+        elif vix_value > 15:
+            signals.append(f"【VIX中度恐慌】VIX {vix_value}，市场波动，")
+        elif vix_value > 10 and vix_value <=15 :
+            signals.append(f"【VIX正常情绪】VIX {vix_value}，美股期权操作")
         elif vix_value <= 10:
             signals.append(f"【VIX极度平静】VIX仅 {vix_value}！市场过度自满，回调风险")
 
